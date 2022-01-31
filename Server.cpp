@@ -11,7 +11,7 @@ Server::Server(int fd, int port) {
 
 Server::~Server() {}
 
-std::vector<User>   Server::getUsers() const {
+std::vector<User *>   Server::getUsers() const {
     return this->users;
 }
 

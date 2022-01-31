@@ -39,9 +39,7 @@ int     main(int ac, char **av) {
     if (ac != 2)
         error("Invalid number of arguments.");
     fd = socket(AF_INET, SOCK_STREAM, 0);
-    struct pollfd   pfd;
-    pfd.fd = fd;
-    pfd.events = POLLIN;    struct sockaddr_in     addr;
+    struct sockaddr_in     addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(atoi(av[1]));
     addr.sin_addr.s_addr = INADDR_ANY;

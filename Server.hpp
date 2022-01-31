@@ -10,6 +10,7 @@
 #include <vector>
 #include <poll.h>
 #include <stdlib.h>
+#include <sstream>
 #include <string.h>
 #include <limits.h>
 #include <signal.h>
@@ -20,12 +21,12 @@ class User;
 class   Server {
     public:
         std::vector<pollfd>     pfds;
-        std::vector<User>       users;
+        std::vector<User *>       users;
         struct sockaddr_in      addr;
 
         Server(int, int);
         ~Server();
-        std::vector<User>       getUsers() const;
+        std::vector<User *>       getUsers() const;
         std::vector<pollfd>   getFds() const;
 };
 

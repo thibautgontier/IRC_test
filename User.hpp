@@ -7,7 +7,7 @@ class User {
     public:
         User(int, const std::string &);
         ~User();
-        void    changeNick(const std::string &);
+        void    setNick(const std::string &);
         const std::string &getNick() const;
         int     getFd() const;
         void    leave();

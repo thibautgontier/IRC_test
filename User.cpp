@@ -12,7 +12,7 @@ const std::string &User::getNick() const {
     return this->nick;
 }
 
-void    User::changeNick(const std::string &new_nick) {
+void    User::setNick(const std::string &new_nick) {
     this->nick = new_nick;
 }
 
