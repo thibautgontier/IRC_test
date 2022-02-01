@@ -9,7 +9,11 @@ Server::Server(int fd, int port) {
     this->addr.sin_addr.s_addr = INADDR_ANY;
 }
 
-Server::~Server() {}
+Server::~Server() {
+    for (size_t i = 0; i < this->pfds.size(); i++) {
+        close(this->pfds[i].fd);
+    }
+}
 
 std::vector<User *>   Server::getUsers() const {
     return this->users;

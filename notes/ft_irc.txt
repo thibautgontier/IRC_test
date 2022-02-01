@@ -1,0 +1,152 @@
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+                                                    Subject Functions
+
+int socket(int domain, int type, int protocol);
+    - creates an endpoint for communication, returns an int (like a fd) that can be used to access it. This fd will be the lowest numbered fd not currently in use.
+    - "domain" is the communication domain. This will refer to the protocol family that we want to use (ex: AF_INET for IPv4)
+    - "type" is the type that we want to give to the socket. (ex: SOCK_STREAM for a two-way, connection based byte stream like TCP)
+    - "protocol" is the protocol to be used by the socket (most type families have only one protocol so we set it to 0. ex: SOCK_STREAM only uses TCP)
+
+
+int setsockopt(int socket, int level, int option_name, const void *option_value, socklen_t option_len);
+    - sets the option "opt_name" at the level "level", to the value "option_value" on the socket "socket". Usually:
+        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)); //here opt is an int equal to 1.
+        This allows the socket to reuse addresses and ports. socklen_t in an unsigned int of size 32 max.
+
+int getsockname(int s, struct sockaddr *name, socklen_t *namelen);
+    - returns the name of socket "s" into "name". "namelen" must be initialized to the size of the memory pointed to by name.
+    It then gets filled with the size of the name upon return.
+    - struct sockaddr {
+        sa_family_t     sa_family;      //unsigned int, the address family
+        char            sa_data[14];    //actual address information
+    }
+
+struct protoent *getprotobyname(const char *name);
+    - returns a protoent structure for the entry in the database that has the protocol name "name". A connection is opened if necessary.
+    - struct protoent {
+        char    *p_name;        //official protocol name
+        char    **p_aliases;    //alias list (other names for the protocol)
+        int     p_proto;        // protocol number
+    }
+
+struct hostent *gethostbyname(const char *name);
+    - returns a structure hostent for the given host "name". "name" can be either a hostname or an IPv4 address in standard dot
+    notation.
+    - struct hostent {
+        char    *h_name;        //official name of the host
+        char    **h_aliases;    //list of the aliases, an array of pointers, the array ends with NULL.
+        int     h_addrtype;     //address type of the host
+        int     h_length;       //length of the address of the host
+        char    **h_addr_list;  //list of pointers to network addresses for the host, ending also in NULL.
+    }
+
+int getaddrinfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res);
+    - "node" is an Internet host, and "service" is a service. Given those, returns one or more addrinfo structures that each contain an Internet address.
+    - Combines the functionality of gethostbyname and getservbyname.
+    - struct addrinfo {
+        int             ai_flags;       //additional option ai_flags
+        int             ai_family;      //address family for the returned addresses. ex: AF_INET.
+        int             ai_socktype;    //preferred socket type, ex: SOCK_STREAM. 0 instead means any type.
+        int             ai_protocol;    //protocol for returned socket addresses. 0 means any protocol can be used.
+        socklen_t       ai_addrlen;     //length of the socket address in bytes.
+        struct sockaddr *ai_addr;       //pointer to the socket address
+        char            *ai_canonname;  //if ai_flags contains AI_CANNONNAME, points to the official name of the host.
+        struct addrinfo *ai_next;       //next item in the linked list of addrinfo structures returned (like node *next).
+    }
+
+void freeaddrinfo(struct addrinfo *res);
+    - frees the memory allocated for the linked list res in getaddrinfo.
+
+int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen); //server side
+    - the socket() call creates a socket but it has no address bound to it. Bind() assigns the address "addr" to the socket "sockfd".
+    "addrlen" is the size in bytes of the address structure "addr". You basically assign a name to a socket.
+
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen); //client side
+    - connects the socket "sockfd" to the address "addr". "addrlen: is the size of addr. Usually used by the client to connect to the server address.
+
+int listen(int sockfd, int backlog); //server side
+    - marks the socket "sockfd" as a passive socket. That means a socket that will be used to accept connections using accept().
+    - "backlog" is the max length of the pending connections queue. If a client tries to connect while the queue is full, it will receive an error / the connection will be ignored.
+
+int accept(int sockfd, struct sockaddr *restrict addr, socklen_t *restrict addrlen); //server side
+    - used for connection-based socket types (ex: SOCK_STREAM). Finds the first pending connection in the queue from listen(), and creates a socket with it,
+    returning a file descriptor to it. The orinial socket "sockfd" is not affected by this call.
+    - "sockfd" is a socket created by socket(), bound to an address with bind() and listens for connections using listen().
+    - "addr" is a pointer to an address that will be filled in with the address of the new socket. "addrlen" is the size of that address. Can both be NULL if the server
+    does not need the client's information.
+    - if the queue is empty, accept() blocks the caller until a connection happens unless the socket is nonblocking (option set upon creation)
+
+These functions handle conversion for byte orders in different communicating systems:
+- uint16_t htons(uint16_t hostshort);     //converts from host byte order to network byte order.
+- uint32_t htonl(uint32_t hostlong);      //converts from host byte order to network byte order.
+- uint16_t ntohs(uint16_t netshort);      //converts from network byte order to host byte order.
+- uint32_t ntohl(uint32_t netlong);       //converts from network byte order to host byte order.
+
+in_addr_t inet_addr(const char *cp);
+    - converts the Internet host address "cp" from IPv4 numbers-and-dots notation into network byte order.
+    - typedef uint32_t  in_addr_t;
+
+char *inet_ntoa(struct in_addr in);
+    - converts the Internet host address "in" from network byte order to IPv4 dotted-decimal notation
+    - struct in_addr {
+        in_addr_t   s_addr;     //address
+    }
+
+ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+    - can only be used when socket "sockfd" is in a connected state. Sends the info in "buf" of size "len" to the socket "sockfd".
+    - similar to write() but can add flags into "flags".
+    - returns the number of bytes sent.
+
+ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+    - used to receive a message from socket "sockfd". The message is stored into "buf" for the length "len".
+    - similar to read() but can add flags into "flags".
+    - returns the number of bytes received.
+
+off_t lseek(int fd, off_t offset, int whence);
+    - repositions the file offset of the open fd "fd" to the argument "offset" according to the directive "whence" which is:
+        * SEEK_SET: the offset is set to "offset" bytes.
+        * SEEK_CUR: the offset is set to its current location + "offset" bytes.
+        * SEEK_END: the offset is set to the size of the file + "offset" bytes.
+    - can be set to beyond the end of the file, and write there.
+    - off_t is a signed integer
+
+int fstat(int fd, struct stat *buf);
+    - gets information about a file into "buf" (like stat()) but from a file descriptor "fd".
+    - struct stat {
+        dev_t           st_dev;     //unsigned long, ID of device containing file
+        ino_t           st_ino;     //unsigned long, inode number
+        mode_t          st_mode;    //unsigned long, macros to check the file type
+        nlink_t         st_nlink;   //unsigned long, number of hard links
+        uid_t           st_uid;     //int, user ID of owner
+        gid_t           st_gid;     //uid_t, group ID of owner
+        dev_t           st_rdev;    //unsigned long, device ID (if special file)
+        off_t           st_size;    //long, total size of the file in bytes
+        blksize_t       st_blksize; //long, preferred blocksize for file system I/O
+        blkcnt_t        st_blocks;  //long, number of 512B blocks allocated
+        time_t          st_atime;   //long, time of last access
+        time_t          st_mtime;   //long, time of last modification
+        time_t          st_ctime;   //long, time of last status change
+    }
+
+int fcntl(int fd, int cmd, ... /* arg */ );
+    - performs an operation specified by "command" on file descriptor "fd". The function can, depending on "cmd", take a third argument, usually an int.
+    - command examples are:
+        * F_DUPFD (followed by an int) - duplicate the file descriptor into a new one.
+        * F_GETFD (followed by void) - returns the file descriptor flags of fd.
+
+int poll(struct pollfd *ufds, unsigned int nfds, int timeout);
+    - Event: a significant change in state (a car being bought goes from "for sale" to "sold"). This event change is made known to other
+        functions and programs that do certain things based on the event.
+    - This system call instructs a program to wait for read/write calls from the given document descriptors. Similar to select().
+    - Poll takes 3 arguments:
+        * ufds is an array that has one element for each document descriptor. The elements are pollfd structures:
+            # struct pollfd {
+                int     fd;     //File descriptor
+                short   events; //Expected events, what the program is checking for
+                short   revents; //Actual returned events
+            };
+        * nfds is an unsigned int, represents the size of the fd array.
+        * timeout is an int that represents the max amount of time that poll should wait before closing.

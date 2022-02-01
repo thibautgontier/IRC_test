@@ -124,7 +124,8 @@ int     main(int ac, char **av) {
     }
     for (std::vector<pollfd>::iterator it = server.pfds.begin(); it != server.pfds.end(); it++)
         close((*it).fd);
-    close(fd);
     std::cout << "Everyone has left the chat, goodbye!\n";                 
     return (0);           
 }
+
+//c++ web project

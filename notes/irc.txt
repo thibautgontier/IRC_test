@@ -1,0 +1,303 @@
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+
+                                        IRC SERVER
+                                        
+-------------------------------------------------------------------------------------------
+
+                            Servers
+
+- the backbone of the IRC, the component that links all other components together.
+- clients connect to it in oder to talk to each other
+- other servers connect to it to connect to connect to the general network
+
+-------------------------------------------------------------------------------------------
+
+                            Clients
+
+- anything connected to a server but not a server
+- 2 types of clients:
+
+User Clients
+- A program that provides a tesxt-based interface that we use to communicate with the IRC.
+- Also known as "users"
+
+Service Clients
+- Not made for talking or used manually
+- usually automated to provide a service to users (ex: statistics collection about users)
+
+-------------------------------------------------------------------------------------------
+
+                            Architecture
+
+- an IRC network is a group of servers connected to each other
+- organized as a spanning tree where each server is the central node of the network it sees (other servers that it is immediately connected to)
+- All communication between clients goes through server - server communication
+
+-------------------------------------------------------------------------------------------
+
+                            Protocol Services
+
+Client locator
+- When a client connects to a server, it registers using a label (nickname) that servers and other clients can use to locate it.
+- Servers keep track of labels in use.
+
+Channel management
+- A named group of users that all receive its messages.
+- has a name and list of current members, and properties that can be manipulated by some of its members (ex: moderators)
+- hosted on one or more servers
+
+-------------------------------------------------------------------------------------------
+
+                            IRC Concepts
+
+One-to-one communication
+- In order for clients to each other, all servers must be able to send a message in one direction along the entire spanning tree.
+- the pathof a message is the shortest path between two servers.
+- means that a message will only be seen by the servers that it goes through to be transmitted.
+
+One-to-many communication
+- to a channel:
+    * like for one-to-one, a message sent to a channel must only be sent and seen by servers that support users on that channel
+    * the message is sent only once to each local server hub, the server is then responsible for fanning it out to each sub servers
+    * messages to a channel with multiple users travel like a one-to-one message.
+- to a host / server mask:
+    * provides a way to send a message to all users that correspond to a mask (all usernames that start with "tg")
+    * messages themselves work in the same way as above.
+- to a list:
+    * the server receives a list of all users to whom it needs to deliver the message, then sends an individual message to each user
+    * obviously a very inefficient method (ex: if there are duplicates in the list the message could be sent multiple times to a user)
+
+One-to-all communication
+- aka broadcast message, sent to all clients and/or servers
+- can result in a massive amount of traffic as all servers / clients need to be reached
+- used for some classes of messages so all servers have the same information
+- Client-to-client:
+    * there is no class of message that needs to be sent to every client
+- Client-to-server:
+    * any information that changes the state of the network (new channel, user joins or leaves a channel, etc) needs to be known by all servers, but this information is never handled by the client itself.
+- Server-to-server:
+    * much more common, used for any message that affects a user, channel or server. Most messages are this way.
+
+-------------------------------------------------------------------------------------------
+
+                            Architecture Problems / flaws
+
+Scalability
+- since all servers need to all have the same information, it is difficult to increase the scale without losing efficency
+
+Reliability
+- each link between two servers is a potential weak point in the whole network.
+
+Network congestion
+- A lot of traffic can cause the link between two servers to break, and need to be reconnected somewhere else, causing more traffic etc.
+- to minimize this issue, servers purposefully do not reconnect too fast if disconnected, in order to reduce congestion
+
+Privacy
+- Since all servers need to have all the information, there is a concern for user privacy.
+
+-------------------------------------------------------------------------------------------
+
+###########################################################################################
+                            
+                            Channels
+
+A named group of users that all receive messages sent to that channel.
+
+-------------------------------------------------------------------------------------------
+
+                            Channel rules
+
+Namespace
+- name is a string that begins with "#" , "&", "+" or "!" and that has <= 50 characters.
+- case insensitive
+- cannot contain a space, a comma "," , a ^G or a colon ":"
+
+Channel scope
+- a user can only become member of a channel if the server to which he is connected knows about that channel
+- the list of servers that know about a channel must be shared by all servers with member users so that a message can reach all members
+- channels that have a name starting with "&" are local to the server on which they are created
+- if there is no channel mask:
+    * the channel is known to all servers on the network
+- if there is a channel mask:
+    * the channel is only known to servers that have member users, and to its neighbors if the mask matches local and neighbor server names.
+    * the area of a masked channel has to be contigous (all servers that are matched must be next to each other so that all users can be reached)
+
+Channel Properties
+- Each channel has its own properties that are defined by channel modes. These can be manipulated by channel members, and change the way that servers manage the channels.
+- if a channel has a "+" prefix, it does not support channel modes. They are all unset.
+
+Privileged members
+- To keep the order on a channel, some members have more privileges. They can:
+    * INVITE : invite a client if the channel is invite-only (+i mode)
+    * KICK : eject a client from a channel
+    * MODE : change the channel modes or member privileges
+    * PRIVMSG : send messages to the channel (if mode +n, +m, +v)
+    * TOPIC : change the channel topic if the mode is +t
+- Channel Operators
+    * aka chop or chanop, considered to own the channel
+    * identified by "@" before their nickname (replies to WHO, NAMES, WHOIS)
+    * do not exist in "+" channels (no modes)
+- Channel Creators
+    * if a user creates a "!" channel, he is its creator, and given operator status.
+    * can toggle certain modes that operators cannot
+    * the MODE command can distinguish operators from creators
+
+-------------------------------------------------------------------------------------------
+
+                            Channel Lifetime
+
+Standard Channels
+- prefix: "&", "#", "+"
+- created implicitly when first user joins, and is destroyed when last user leaves it.
+- a channel cannot be created if another channel of the same name exists.
+
+Safe Channels
+- prefix: "!"
+- cannot be implicitly created, the user sends a JOIN request to the server, using "!" as channel identifier
+- the user only chooses part of the channel name (short name) and the server adds 5 characters to the end in order to make it unique and invulnerable to network splits.
+- is not destroyed when the last user leaves it
+
+-------------------------------------------------------------------------------------------
+
+                            User Commands
+
+#Mandatory
+NICK <nickname> - changes the client's nickname. Takes an argument, the new nickname.
+
+USER <user> <mode> <unused> <realname> - used at the beginning of the connection to specify the username, hostname, real name and initial user modes of
+        the connecting client. <realname> can contain spaces, so must be prefixed by a colon (:).
+
+JOIN <channels> - makes the client join the channel(s). If the parameter is a list separated by commas (,), the client joins all channels in the list.
+        Else, the client joins the given channel.
+
+PRIVMSG <msgtarget> :<message> - sends the <message> to the <msgtarget> (a user or a channel)
+
+OPER <username> <password> - gives the user <username> operator status if possible (if the user matches the criteria)
+
+WHO [<name> ["o"]] - returns a list of users who match the name <name>. If the -o flag is given, only return the IRC operators that match the name.
+
+WHOIS <nicknames> - returns information about the comma (,) separated list of nicks <nicknames>. If a single nickname is given, returns detailed information about them.
+
+WHOWAS <nickname> [<count>] - returns information about a nickname that is no longer used (the client disconnected.) if the <count> argument is given:
+        returns information about the last <count> times that the nickname has been used.
+
+PART <channels> - causes a user to leave the channels in the comma (,) separated list of channels <channels>.
+
+#Optional
+INVITE <nickname> <channel> - invites the user <nickname> to join channel <channel>. If the channel has mode -i on, only a channel operator can invite someone else.
+
+KICK <channel> <client> - removes client <client> from channel <channel>. Can only be done by a channel operator.
+
+LIST [<channels>] - lists the channel on the server. If the <channels> parameter is given, lists all the channels of the topic <channels>.
+
+NAMES [<channels>] - lists all the users on the server, grouped by channels (all users not on any channel are shown to be under channel "*"). If
+        <channels> is given, lists all the users on the comma (,) separated list of channels <channels>.
+    
+TOPIC <channel> [<topic>] - returns the topic of channel <channel>. If <topic> is given, changes the topic of <channel> to it. If channel mode -t is on,
+        only a channel operator can change the topic.
+
+MODE <channel> {[+|-]|o|p|s|i|t|n|b|v} [<limit>] [<user>] [<ban mask>] - changes a mode of <channel>, must be done by a channel operator.
+    a - toggle the anonymous channel flag. The sender of any message will be masked. Can only be toggled by the channel creator. Cannot be used on other channels. The WHOIS, WHO and NAMES commands must not reveal the users.
+    i - toggle the invite-only channel flag - new members are only accepted if they match invite-list or if an operator invites them. Restricts the usage of INVITE command.
+    m - toggle the moderated channel - only channel operators and voice privileged members can send messages.
+    n - toggle the no messages to channel from clients on the outside - only members can send messages.
+    q - toggle the quiet channel flag - for use by servers only, does not send new join, parts or nick changes messages. typically used to have a channel for the server to send notices relating to its operations.
+    p - toggle the private channel flag - name of the channel cannot be acquired from the servers if not a member. Omitted from queries like WHOIS.
+    s - toggle the secret channel flag - same as secret, server acts like the channel does not exist fir TOPIC, LIST, NAMES commands, but will correctly reply to MODES command. Not counted in LUSERS command.
+    r - toggle the server reop channel flag - only on "!" channels, can only be toggled by creator. Takes an amount of time, and if there is no operator for longer than that, the channel reops some or all channel inhabitants.
+    t - toggle the topic settable by channel operator only flag - restricts the usage of TOPIC command to operators.
+    k - set/remove the channel key (password) - servers reject requests to join the channel unless the key is given. Key is given to members after a MODE query.
+    l - set/remove the user limit to channel - when the limit is reached, servers forbid their local users from joining. Limit is given to members after a MODE query
+    Access control:
+    b - set/remove ban mask to keep users out - if a user tries to join, his user checks whether his addresses the ban mask and if so forbids him from joining unless he is also on an exception mask.
+    e - set/remove an exception mask to override a ban mask
+    if a user has been banned, he can be reinvited by an operator and rejoin. Cannot speak on the channel unless he is an operator or has voice privilege.
+    I - set/remove an invitation mask to automatically override the invite-only flag - users whose addresses match the mask can join the channel without invitation.
+
+MODE <nickname> {[+|-]|i|w|o|a|r}
+    These modes usually affect:
+    - how a user is seen by the other users
+    - which messages / types of messages are sent to the user.
+    Modes:
+    a - The user is flagged as "away", instead user should use AWAY command.
+    i - the user is marked as invisible, hides you if someone does a /WHO or /NAMES
+    w - user receives wallops, which are messages sent to all users with -w turned on on a server.
+    r - restricted user connection - can be turned on (a user de-ops themselves) but not turned off by a user
+    o - operator flag, can be turned off but not on by a user
+
+QUIT - disconnects the user from the server.
+
+KILL <client> - forcibly removes a client <client> from the network. Can only be issued by an IRC operator.
+
+DIE - Instructs the server to shut down. Can only be issued by an IRC operator.
+
+HELP - displays a help file, usually created by the creators of the server, with useful information.
+
+INFO [<target>] - displays information about the server <target>, or this server if no parameter is given.
+
+ISON <nicknames> - returns which users in the comma (,) separated list <nicknames> is currently on the network, or an empty list if no one is on.
+
+PASS <password> - sets a connection password (password to a nickname so the nickname is reserved.)
+
+PING <server> - tests the presence of a connection, a PING message expects a PONG reply.
+
+PONG <server> - replies to a PING message, to respond "I am still alive and the connection still works"
+
+RULES - requests the server rules, if they have been defined in the server.
+
+TIME [<server>] - returns the local time on this server, or on <server> if specified.
+
+USERS [<server>] - returns a list of users and information about these users.
+
+VERSION [<server>] - returns the version of the current server or of <server> if specified.
+
+-------------------------------------------------------------------------------------------
+
+                            Current Issues / Implementation
+
+Tracking Recently Used Channels (aka Channel Delay)
+- generally only applies to "#" channels
+- when a network split occurs, servers need to keep track of which channels lost operators. These channels are put in a special state for a limited time:
+    * They cannot cease to exist - if everyone leaves, it becomes unavailable and no one can join.
+    * the channel can be available again if:
+        # a user joins (the lost operator)
+        # the time limit is reached, the channel is destroyed.
+    * the time duration should be:
+        # set according to the size of the network
+        # set according to the usual duration of network splits
+        # the same across all servers in the network
+
+-------------------------------------------------------------------------------------------
+
+Safe channels
+- start with "!", then a given name, then a channel identifier provided by the server
+- Channel identifier
+    * the server uses the current time, converts it into a string of 5 characters using "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890" as a base.
+- Channel Delay
+    * follow the mechanism above, with a few differences:
+        # servers keep track of ALL users (not just operators)
+        # these channels never become unavailable, always possible to join them even if they are empty.
+- Abuse window
+    * since the identifier creating function is well known, we need to prevent someone from orchestrating a name collision:
+        # a server keeps a list of current channel short names and identifiers that are about to be used to protect channel names if a network split occurs
+        # can be solved by forbidding the use of the same short name altogether
+- Server reop
+    * if a channel has been opless for longer than the time set for a network split, and the "r" flag is set, the server follows the rules written on the doc (https://datatracker.ietf.org/doc/html/rfc2811 section 5.2.5)
+
+-------------------------------------------------------------------------------------------
+
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+                                                    
+                                                    IRSSI commands
+
+alt+1, alt+3, alt+5 to change windows
+/window new for new window
+/list -YES lists all channels and users
+/nick displays your nick
+/nick newnick changes your nick to newnick
+/join joins a channel
+/leave leaves a channel

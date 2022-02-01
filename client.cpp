@@ -11,14 +11,11 @@
 #include <poll.h>
 
 int fd;
-
-void    close_it () {
-    close(fd);
-    exit(0);
-}
+int finish;
 
 void    error(std::string error) {
     std::cout << error << std::endl;
+    close(fd);
     exit(0);
 }
 
@@ -29,7 +26,9 @@ void    *send_it(void *ptr) {
         std::getline(std::cin, message);
         send(fd, message.c_str(), message.length(), 0);
         if (message.compare("exit") == 0) {
-            close_it();
+            finish = 1;
+            close(fd);
+            pthread_exit(NULL);
         }
     }
     return (NULL);
@@ -38,6 +37,7 @@ void    *send_it(void *ptr) {
 int     main(int ac, char **av) {
     if (ac != 2)
         error("Invalid number of arguments.");
+    finish = 0;
     fd = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in     addr;
     addr.sin_family = AF_INET;
@@ -54,13 +54,15 @@ int     main(int ac, char **av) {
     if (pthread_create(&pid, 0, send_it, NULL))
         error("threading failed.");
     while (1) {
+        if (finish == 1)
+            break ;
         char str[256];
         recv(fd, &str, sizeof(str), 0);
         std::cout << std::endl << str << std::endl;
         memset(str, '\0', 255);
     }
+    // std::cout << "leaving...\n";
     pthread_join(pid, NULL);
     close(fd);
-    close_it();
     return (0);
 }
