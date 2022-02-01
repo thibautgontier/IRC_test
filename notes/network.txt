@@ -166,6 +166,8 @@ IPv4
         ex: 192.0.2.111
     - Most sites on the Internet currently use IPv4
     - IPv4 has the risk of running out, so IPv6 was born to deal with this issue.
+    - the first part of the address can be the network address, and the last part can be the host.
+        ex: in address 192.0.2.12, we can be talking about host 12 on network 192.0.2.0
 
 IPv6
     - New version, with trillions of different addresses.
@@ -176,6 +178,11 @@ IPv6
         * Leading 0s can be left out in the notation
             ex: 2001:0db8:ab00:0000:0000:0000:0000:0000 is the same as 2001:db8:ab00::
 
+Localhost: The loopback address (the machine I'm running on now) is 127.0.0.1 in IPv4, and 0000:0000:0000:0000:0000:0000:0000:0001 or ::1 in IPv6.
+
+An IPv4 address can be represented as an IPv6 address like this:
+    IPv4: 192.0.2.33
+    IPv6: ::ffff:192.0.2.33
 
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
                                                 
@@ -196,3 +203,4 @@ Once the destination computer receives the packet, it:
 000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 
                                                 
+                                
