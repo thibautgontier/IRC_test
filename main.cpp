@@ -79,6 +79,8 @@ int     main(int ac, char **av) {
     if (ac != 2)
         error("Invalid number of arguments.");
     int fd = socket(AF_INET, SOCK_STREAM, 0);
+    int option = 1;
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
     Server  server(fd, atoi(av[1]));
     int ret = bind(fd, (struct sockaddr *)&server.addr, sizeof(server.addr));
     if (ret == -1)
@@ -127,5 +129,3 @@ int     main(int ac, char **av) {
     std::cout << "Everyone has left the chat, goodbye!\n";                 
     return (0);           
 }
-
-//c++ web project

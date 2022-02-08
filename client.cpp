@@ -61,7 +61,6 @@ int     main(int ac, char **av) {
         std::cout << std::endl << str << std::endl;
         memset(str, '\0', 255);
     }
-    // std::cout << "leaving...\n";
     pthread_join(pid, NULL);
     close(fd);
     return (0);
