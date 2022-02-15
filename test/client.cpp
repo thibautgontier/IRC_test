@@ -9,16 +9,19 @@ void    error(std::string str) {
     exit(1);
 }
 
-int     main() {
+int     main(int ac, char **av) {
+    if (ac != 2)
+        return (1);
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in  addr;
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(6667);
+    addr.sin_port = htons(atoi(av[1]));
     addr.sin_addr.s_addr = INADDR_ANY;
     connect(fd, (struct sockaddr *) &addr, sizeof(addr));
     while (1) {
         std::string str;
         std::getline(std::cin, str);
         send(fd, str.c_str(), str.length(), 0);
+    }
     return (0);
 }

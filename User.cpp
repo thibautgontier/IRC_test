@@ -18,6 +18,7 @@ void    User::setNick(const std::string &new_nick) {
 
 void    User::leave() {
     this->has_left = true;
+    close(this->fd);
 }
 
 bool    User::hasLeft() {
