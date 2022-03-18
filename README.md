@@ -1,4 +1,4 @@
-Doc on 42 project ft_irc
+# Doc on 42 project ft_irc
 
 If you need somewhere to start, I have summarized my research for the project in the folder notes.
 
